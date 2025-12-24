@@ -11,24 +11,35 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
- 
+const addBrowserIsolationHeaders = (response: Response) => {
+  const wrappedResponse = new Response(response.body, response);
+  wrappedResponse.headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  wrappedResponse.headers.set("Cross-Origin-Embedder-Policy", "credentialless");
+  return wrappedResponse;
+};
+
 export default {
   async fetch(request: Request) {
     const requestUrl = new URL(request.url);
-	let firebaseProjectUrl = "https://ablex-production.firebaseapp.com";
+
     if (requestUrl.pathname.startsWith("/__/auth/")) {
-		let firebaseProjectUrl = "https://ablex-production.firebaseapp.com";
-		if(requestUrl.hostname.startsWith("dev.")) {
-			firebaseProjectUrl = "https://ablex-development.firebaseapp.com";
-		} else if(requestUrl.hostname.startsWith("staging")) {
-			firebaseProjectUrl = "https://ablex-staging.firebaseapp.com";
-		} 
+      let firebaseProjectUrl = "https://ablex-production.firebaseapp.com";
+      if (requestUrl.hostname.startsWith("dev.")) {
+        firebaseProjectUrl = "https://ablex-development.firebaseapp.com";
+      } else if (requestUrl.hostname.startsWith("staging")) {
+        firebaseProjectUrl = "https://ablex-staging.firebaseapp.com";
+      }
+
       const transformedUrl = new URL(
         firebaseProjectUrl + requestUrl.pathname + requestUrl.search,
       );
       const newRequest = new Request(transformedUrl.toString(), request);
-      return fetch(newRequest);
+      const response = await fetch(newRequest);
+      return addBrowserIsolationHeaders(response);
     }
-    return new Response("Not found", { status: 404 });
+
+    return addBrowserIsolationHeaders(
+      new Response("Not found", { status: 404 }),
+    );
   },
 };
