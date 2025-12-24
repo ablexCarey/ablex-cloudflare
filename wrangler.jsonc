@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "ablex-cloudfare",
+	"name": "ablex-cloudflare",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-12-24",
 	"observability": {
