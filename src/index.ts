@@ -18,9 +18,9 @@ export default {
 	let firebaseProjectUrl = "https://ablex-production.firebaseapp.com";
     if (requestUrl.pathname.startsWith("/__/auth/")) {
 		let firebaseProjectUrl = "https://ablex-production.firebaseapp.com";
-		if(requestUrl.hostname.startsWith("ablex-development")) {
+		if(requestUrl.hostname.startsWith("dev.")) {
 			firebaseProjectUrl = "https://ablex-development.firebaseapp.com";
-		} else if(requestUrl.hostname.startsWith("ablex-staging")) {
+		} else if(requestUrl.hostname.startsWith("staging")) {
 			firebaseProjectUrl = "https://ablex-staging.firebaseapp.com";
 		} 
       const transformedUrl = new URL(
