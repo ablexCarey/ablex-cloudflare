@@ -11,11 +11,26 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-const addAccessControlHeaders = (response: Response) => {
+const buildCorsHeaders = (request: Request) => {
+  const origin = request.headers.get("Origin") ?? "*";
+  const requestHeaders = request.headers.get("Access-Control-Request-Headers");
+
+  const headers = new Headers();
+  headers.set("Access-Control-Allow-Origin", origin);
+  headers.set("Vary", "Origin");
+  headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  headers.set(
+    "Access-Control-Allow-Headers",
+    requestHeaders ?? "Content-Type, Authorization",
+  );
+  headers.set("Access-Control-Max-Age", "86400");
+  return headers;
+};
+
+const addAccessControlHeaders = (response: Response, request: Request) => {
   const wrappedResponse = new Response(response.body, response);
-  wrappedResponse.headers.set("Access-Control-Allow-Origin", "*");
-  wrappedResponse.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  wrappedResponse.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  const corsHeaders = buildCorsHeaders(request);
+  corsHeaders.forEach((value, key) => wrappedResponse.headers.set(key, value));
   return wrappedResponse;
 };
 
@@ -30,9 +45,14 @@ export default {
   async fetch(request: Request) {
     const requestUrl = new URL(request.url);
 
-    if(requestUrl.hostname.startsWith("functions-local")) {
+    if (requestUrl.hostname.startsWith("functions-local")) {
+      if (request.method === "OPTIONS") {
+        // Short-circuit preflight so it always returns an OK response with CORS headers.
+        return new Response(null, { status: 204, headers: buildCorsHeaders(request) });
+      }
+
       const response = await fetch(request);
-      return addAccessControlHeaders(response);
+      return addAccessControlHeaders(response, request);
     }
 
     if (requestUrl.pathname.startsWith("/__/auth/")) {
