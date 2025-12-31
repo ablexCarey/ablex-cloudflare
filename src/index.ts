@@ -11,6 +11,14 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
+const addAccessControlHeaders = (response: Response) => {
+  const wrappedResponse = new Response(response.body, response);
+  wrappedResponse.headers.set("Access-Control-Allow-Origin", "*");
+  wrappedResponse.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  wrappedResponse.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  return wrappedResponse;
+};
+
 const addBrowserIsolationHeaders = (response: Response) => {
   const wrappedResponse = new Response(response.body, response);
   wrappedResponse.headers.set("Cross-Origin-Opener-Policy", "same-origin");
@@ -21,6 +29,11 @@ const addBrowserIsolationHeaders = (response: Response) => {
 export default {
   async fetch(request: Request) {
     const requestUrl = new URL(request.url);
+
+    if(requestUrl.hostname.startsWith("functions-local")) {
+      const response = await fetch(request);
+      return addAccessControlHeaders(response);
+    }
 
     if (requestUrl.pathname.startsWith("/__/auth/")) {
       let firebaseProjectUrl = "https://ablex-production.firebaseapp.com";
